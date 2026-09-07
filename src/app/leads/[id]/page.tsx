@@ -473,41 +473,27 @@ export default async function LeadDetailPage({
               afterScreenshotPath={latestPreview.afterScreenshotPath}
               beforeHtmlPath={latestPreview.beforeHtmlPath}
               afterHtmlPath={latestPreview.afterHtmlPath}
+              changeRegions={latestPreview.changeRegions}
+              changesSummary={latestPreview.changesSummary}
             />
           </div>
-          <div className="grid grid-cols-1 gap-4 border-t border-ink-800 p-5 md:grid-cols-2">
-            <div>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
-                Changes made
-              </h3>
-              <ul className="space-y-2 text-xs">
-                {latestPreview.changesSummary.map((c, i) => (
-                  <li key={i} className="rounded border border-ink-800 p-2">
-                    <span className="font-semibold text-ink-200">{c.section}: </span>
-                    <span className="text-ink-300">{c.change}</span>
-                    <p className="mt-0.5 italic text-ink-500">{c.rationale}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
-                QA checks
-              </h3>
-              <ul className="space-y-1.5 text-xs">
-                {latestPreview.qaChecks.map((c) => (
-                  <li key={c.id} className="flex items-start gap-2">
-                    <span className={c.passed ? "text-emerald-400" : "text-red-400"}>
-                      {c.passed ? "✓" : "✗"}
-                    </span>
-                    <div>
-                      <span className="font-medium text-ink-200">{c.checkType.replace(/_/g, " ")}: </span>
-                      <span className="text-ink-400">{c.notes}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="border-t border-ink-800 p-5">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
+              QA checks
+            </h3>
+            <ul className="grid grid-cols-1 gap-1.5 text-xs sm:grid-cols-2">
+              {latestPreview.qaChecks.map((c) => (
+                <li key={c.id} className="flex items-start gap-2">
+                  <span className={c.passed ? "text-emerald-400" : "text-red-400"}>
+                    {c.passed ? "✓" : "✗"}
+                  </span>
+                  <div>
+                    <span className="font-medium text-ink-200">{c.checkType.replace(/_/g, " ")}: </span>
+                    <span className="text-ink-400">{c.notes}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         </Card>
       )}

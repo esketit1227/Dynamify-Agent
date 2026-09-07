@@ -1,0 +1,1 @@
+ALTER TABLE "previews" ADD COLUMN "change_regions" jsonb DEFAULT '[]'::jsonb NOT NULL;

@@ -12,6 +12,10 @@ Dynamify's thesis (autonomous website personalization) is easy to demonstrate
 for a given prospect, then prepares the evidence to start a sales
 conversation.
 
+**[docs/pipeline.html](./docs/pipeline.html)** is a full visual map of the
+19-stage pipeline below — open it in a browser for the diagram version of
+this README.
+
 ## Pipeline
 
 ```
@@ -91,6 +95,18 @@ mechanically rather than just by prompting:
 3. `applyPatches()` applies them to the prepared HTML. Everything the model
    wasn't explicitly asked to change — logo, layout, CSS, imagery, nav — is
    untouched byte-for-byte.
+
+Because every patch is addressed by a stable selector, the same selectors
+double as a way to show the diff: `renderHtmlWithRegions()`
+(`src/lib/capture/browser.ts`) captures each patched element's bounding box
+on both the before and after render, in the same pass as the screenshot.
+The dashboard's preview compare (`src/components/lead/preview-compare.tsx`)
+uses those regions to draw numbered highlight boxes directly on the
+screenshots — hovering a box or a change-list entry highlights the other —
+plus a drag-to-reveal before/after slider. This is exact, not estimated:
+the boxes come from the real rendered layout, so a patch that reflows the
+page (a longer subhead pushing the CTA down) shows the box in its real,
+shifted position on the "after" render.
 
 ## Getting started
 

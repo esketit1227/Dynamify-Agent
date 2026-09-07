@@ -31,6 +31,7 @@ import {
   reports,
   outreachDrafts,
   type WebsiteMapPage,
+  type ChangeRegion,
 } from "@/lib/db/schema";
 import { runStage } from "./stage-runner";
 import { qualifyIcp } from "@/lib/agents/icp-qualifier";
@@ -46,7 +47,7 @@ import { runPreviewQa } from "@/lib/agents/preview-qa";
 import { generateReport } from "@/lib/agents/report-generator";
 import { draftOutreach } from "@/lib/agents/outreach-drafter";
 import { preparePage, applyPatches } from "@/lib/preview/html";
-import { renderHtmlToScreenshot } from "@/lib/capture/browser";
+import { renderHtmlWithRegions } from "@/lib/capture/browser";
 import { getStorage } from "@/lib/capture/storage";
 
 async function setLeadStatus(leadId: string, status: (typeof leads.$inferInsert)["status"]) {
@@ -343,17 +344,34 @@ export async function runLeadPipeline(leadId: string): Promise<{ pipelineRunId: 
 
     const patchResult = applyPatches(prepared.annotatedHtml, previewGen.patches);
 
-    const [beforeScreenshot, afterScreenshot] = await Promise.all([
-      renderHtmlToScreenshot(prepared.annotatedHtml),
-      renderHtmlToScreenshot(patchResult.html),
+    // Capture bounding boxes for every patched selector on both the before
+    // and after render, in the same pass as the screenshot — this is what
+    // lets the dashboard draw "exactly what changed" highlight boxes
+    // instead of just a side-by-side image.
+    const patchedSelectors = Array.from(new Set(previewGen.patches.map((p) => p.selector)));
+    const [beforeRender, afterRender] = await Promise.all([
+      renderHtmlWithRegions(prepared.annotatedHtml, patchedSelectors),
+      renderHtmlWithRegions(patchResult.html, patchedSelectors),
     ]);
+
+    const changeRegions: ChangeRegion[] = previewGen.patches.map((patch) => {
+      const summary = previewGen.changesSummary.find((c) => c.section === patch.section);
+      return {
+        section: patch.section,
+        selector: patch.selector,
+        change: summary?.change ?? `${patch.action.replace(/_/g, " ")}: ${patch.value ?? ""}`.trim(),
+        rationale: summary?.rationale ?? "",
+        beforeRect: beforeRender.regions[patch.selector] ?? null,
+        afterRect: afterRender.regions[patch.selector] ?? null,
+      };
+    });
 
     const previewBase = `leads/${leadId}/previews/${demoStrategyRow!.id}`;
     const [beforeHtmlKey, afterHtmlKey, beforeShotKey, afterShotKey] = await Promise.all([
       storage.put(`${previewBase}/before.html`, prepared.annotatedHtml, "text/html"),
       storage.put(`${previewBase}/after.html`, patchResult.html, "text/html"),
-      storage.put(`${previewBase}/before.png`, beforeScreenshot, "image/png"),
-      storage.put(`${previewBase}/after.png`, afterScreenshot, "image/png"),
+      storage.put(`${previewBase}/before.png`, beforeRender.screenshotPng, "image/png"),
+      storage.put(`${previewBase}/after.png`, afterRender.screenshotPng, "image/png"),
     ]);
 
     const [previewRow] = await db
@@ -368,6 +386,7 @@ export async function runLeadPipeline(leadId: string): Promise<{ pipelineRunId: 
         afterHtmlPath: storage.locate(afterHtmlKey),
         afterScreenshotPath: storage.locate(afterShotKey),
         changesSummary: previewGen.changesSummary,
+        changeRegions,
         status: "draft",
       })
       .returning();

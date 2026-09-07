@@ -8,6 +8,13 @@
       "when": 1788787869322,
       "tag": "0000_salty_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788789502920,
+      "tag": "0001_salty_squadron_sinister",
+      "breakpoints": true
     }
   ]
 }

@@ -544,6 +544,23 @@ export const demoStrategies = pgTable("demo_strategies", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export type Rect = { x: number; y: number; width: number; height: number };
+
+/**
+ * One changed element, in full-page-screenshot pixel coordinates, on both
+ * the before and after render. Powers the highlight-overlay in the preview
+ * compare UI — a rect is null when that element couldn't be located on that
+ * particular render (e.g. a section the patch removed entirely).
+ */
+export type ChangeRegion = {
+  section: string;
+  selector: string;
+  change: string;
+  rationale: string;
+  beforeRect: Rect | null;
+  afterRect: Rect | null;
+};
+
 export const previews = pgTable(
   "previews",
   {
@@ -563,6 +580,7 @@ export const previews = pgTable(
     afterHtmlPath: text("after_html_path").notNull(),
     afterScreenshotPath: text("after_screenshot_path"),
     changesSummary: jsonb("changes_summary").$type<PlannedChange[]>().notNull(),
+    changeRegions: jsonb("change_regions").$type<ChangeRegion[]>().notNull().default([]),
     status: previewStatusEnum("status").notNull().default("draft"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

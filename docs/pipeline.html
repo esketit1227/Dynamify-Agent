@@ -1,0 +1,564 @@
+<title>Dynamify Scout Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f2f2f6;
+    --surface: #ffffff;
+    --surface-2: #ebecf2;
+    --ink: #14151d;
+    --ink-soft: #4a4c5c;
+    --muted: #6c6f85;
+    --line: #d6d7e2;
+    --line-strong: #b9bbcc;
+    --accent: #5850ec;
+    --accent-ink: #423ac2;
+    --accent-soft: #eceafd;
+    --gate: #b8710f;
+    --gate-soft: #faf0dd;
+    --stop: #b8402f;
+    --stop-soft: #fbe9e6;
+    --success: #1f8f5f;
+    --success-soft: #e6f5ee;
+    --store: #5c5f74;
+    --shadow: 0 1px 2px rgba(20,21,29,0.04), 0 6px 20px -8px rgba(20,21,29,0.12);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #101119;
+      --surface: #171825;
+      --surface-2: #1e2032;
+      --ink: #eceefc;
+      --ink-soft: #c2c4dc;
+      --muted: #9294b3;
+      --line: #2c2e44;
+      --line-strong: #3c3f5c;
+      --accent: #8b85ff;
+      --accent-ink: #cfccff;
+      --accent-soft: #23213f;
+      --gate: #e3a94c;
+      --gate-soft: #2c2416;
+      --stop: #e2796a;
+      --stop-soft: #2e1c1a;
+      --success: #52c797;
+      --success-soft: #14261f;
+      --store: #a7a9c4;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 30px -12px rgba(0,0,0,0.55);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #101119;
+    --surface: #171825;
+    --surface-2: #1e2032;
+    --ink: #eceefc;
+    --ink-soft: #c2c4dc;
+    --muted: #9294b3;
+    --line: #2c2e44;
+    --line-strong: #3c3f5c;
+    --accent: #8b85ff;
+    --accent-ink: #cfccff;
+    --accent-soft: #23213f;
+    --gate: #e3a94c;
+    --gate-soft: #2c2416;
+    --stop: #e2796a;
+    --stop-soft: #2e1c1a;
+    --success: #52c797;
+    --success-soft: #14261f;
+    --store: #a7a9c4;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 30px -12px rgba(0,0,0,0.55);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  /* ---------- Header ---------- */
+  header.page {
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border: 1px solid var(--line);
+    padding: 5px 10px;
+    border-radius: 6px;
+  }
+  h1 {
+    font-size: 32px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+    margin: 16px 0 10px;
+    text-wrap: balance;
+  }
+  .dek {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 62ch;
+  }
+  .dek b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Legend ---------- */
+  .legend {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .legend-swatch { flex: none; }
+  .sw-node { width: 16px; height: 12px; border-radius: 3px; background: var(--surface); border: 1.5px solid var(--accent); }
+  .sw-gate { width: 16px; height: 12px; background: var(--gate-soft); border: 1.5px solid var(--gate); clip-path: polygon(14% 0%, 86% 0%, 100% 50%, 86% 100%, 14% 100%, 0% 50%); }
+  .sw-store { width: 16px; height: 12px; border-radius: 3px; background: var(--surface); border: 1.5px dashed var(--store); }
+  .sw-branch { width: 20px; height: 2px; background: repeating-linear-gradient(90deg, var(--stop), var(--stop) 4px, transparent 4px, transparent 7px); }
+
+  /* ---------- Pipeline ---------- */
+  .pipeline { margin-top: 44px; }
+
+  .phase { display: flex; gap: 20px; }
+  .phase + .phase { margin-top: 6px; }
+  .phase-rail {
+    flex: none;
+    width: 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .phase-rail .stem {
+    width: 2px;
+    flex: 1;
+    background: var(--line-strong);
+  }
+  .phase-rail .dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1.5px var(--accent);
+    flex: none;
+  }
+  .phase.is-learn .phase-rail .dot { background: var(--store); box-shadow: 0 0 0 1.5px var(--store); }
+
+  .phase-body { flex: 1; padding-bottom: 30px; min-width: 0; }
+  .phase-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .phase-label .idx { color: var(--accent-ink); font-weight: 600; }
+  .phase.is-learn .phase-label .idx { color: var(--store); }
+
+  .node-stack { display: flex; flex-direction: column; gap: 0; }
+  .node-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+  .node-pair { display: flex; gap: 14px; flex: 1; flex-wrap: wrap; }
+
+  .node {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 13px 16px;
+    box-shadow: var(--shadow);
+    flex: 1;
+    min-width: 220px;
+  }
+  .node-pair .node { min-width: 200px; }
+  .node .title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .node .title { font-weight: 600; font-size: 14.5px; letter-spacing: -0.005em; }
+  .node .code { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--muted); }
+  .node .subtitle { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--accent-ink); margin-top: 4px; }
+  .node .detail { font-size: 12px; color: var(--ink-soft); margin-top: 6px; line-height: 1.5; }
+  .node .badge {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+  }
+
+  .node.is-store { border-left-style: dashed; border-left-color: var(--store); }
+  .node.is-store .subtitle { color: var(--store); }
+
+  .node.is-gate {
+    border: 1.5px solid var(--gate);
+    background: var(--gate-soft);
+    clip-path: polygon(6% 0%, 94% 0%, 100% 50%, 94% 100%, 6% 100%, 0% 50%);
+    padding: 16px 40px;
+    text-align: center;
+  }
+  .node.is-gate .subtitle { color: var(--gate); }
+  .node.is-gate .title-row { justify-content: center; }
+
+  /* connector arrow between stacked nodes */
+  .flow {
+    display: flex;
+    align-items: center;
+    padding: 2px 0 2px 0;
+    color: var(--line-strong);
+  }
+  .flow svg { display: block; }
+
+  /* branch off to the side */
+  .branch {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-left: 8px;
+  }
+  .branch svg { flex: none; color: var(--stop); }
+  .branch.is-flag svg { color: var(--gate); }
+  .branch-card {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--stop);
+    background: var(--stop-soft);
+    border: 1px solid color-mix(in srgb, var(--stop) 35%, transparent);
+    border-radius: 8px;
+    padding: 8px 11px;
+    max-width: 230px;
+  }
+  .branch.is-flag .branch-card { color: var(--gate); background: var(--gate-soft); border-color: color-mix(in srgb, var(--gate) 35%, transparent); }
+
+  /* fan-in candidates above Decide node */
+  .fanin { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 8px; padding-left: 4px; }
+  .chip {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    background: var(--surface-2);
+  }
+  .chip.is-primary {
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .feedback {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--store);
+  }
+
+  /* ---------- Footer / runtime ---------- */
+  footer.runtime {
+    margin-top: 46px;
+    padding-top: 26px;
+    border-top: 1px solid var(--line);
+  }
+  footer.runtime h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 0 0 12px;
+  }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 620px) {
+    .wrap { padding: 36px 16px 64px; }
+    h1 { font-size: 26px; }
+    .phase { gap: 12px; }
+    .phase-rail { width: 18px; }
+    .node-pair { flex-direction: column; }
+    .branch { margin-left: 0; margin-top: 8px; width: 100%; }
+    .node.is-gate { padding: 16px 20px; clip-path: none; border-radius: 10px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="page">
+    <span class="eyebrow">🧭 internal reference</span>
+    <h1>Dynamify Scout Pipeline</h1>
+    <p class="dek">
+      How one lead moves through Scout's agent system — from an unqualified domain to a
+      demo-ready outreach draft. <b>19 stages</b>, <b>6 named agents</b> (A–F), and exactly
+      <b>one human checkpoint</b> before anything reaches a prospect's inbox.
+    </p>
+
+    <div class="legend" role="group" aria-label="Diagram legend">
+      <div class="legend-item"><span class="legend-swatch sw-node"></span>Automated agent step</div>
+      <div class="legend-item"><span class="legend-swatch sw-gate"></span>Human decision gate</div>
+      <div class="legend-item"><span class="legend-swatch sw-store"></span>Data store / dataset</div>
+      <div class="legend-item"><span class="legend-swatch sw-branch"></span>Conditional branch</div>
+    </div>
+  </header>
+
+  <main class="pipeline">
+
+    <!-- PHASE 00 — INTAKE -->
+    <section class="phase">
+      <div class="phase-rail"><div class="dot"></div><div class="stem"></div></div>
+      <div class="phase-body">
+        <div class="phase-label"><span class="idx">00</span> · Intake</div>
+        <div class="node-stack">
+          <div class="node">
+            <div class="title-row"><span class="title">Lead created</span><span class="code">leads</span></div>
+            <div class="subtitle">Dashboard → Postgres</div>
+            <div class="detail">Company name + domain. Status starts at <span class="mono">new</span>.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 01 — QUALIFY -->
+    <section class="phase">
+      <div class="phase-rail"><div class="dot"></div><div class="stem"></div></div>
+      <div class="phase-body">
+        <div class="phase-label"><span class="idx">01</span> · Qualify</div>
+        <div class="node-stack">
+          <div class="node-row">
+            <div class="node">
+              <div class="title-row"><span class="title">ICP Qualification</span><span class="code">Agent A</span></div>
+              <div class="subtitle">OpenAI Responses API</div>
+              <div class="detail">fitScore 0–100, business model, likely decision maker — reasoned from company + domain alone, before any crawl.</div>
+            </div>
+            <div class="branch">
+              <svg viewBox="0 0 46 24" width="46" height="24" aria-hidden="true"><line x1="0" y1="12" x2="34" y2="12" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/><polygon points="42,12 32,7 32,17" fill="currentColor"/></svg>
+              <div class="branch-card">shouldAnalyze = false<br>→ disqualified, pipeline stops</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 02 — RESEARCH -->
+    <section class="phase">
+      <div class="phase-rail"><div class="dot"></div><div class="stem"></div></div>
+      <div class="phase-body">
+        <div class="phase-label"><span class="idx">02</span> · Research</div>
+        <div class="node-stack">
+          <div class="node">
+            <div class="title-row"><span class="title">Website Explorer</span><span class="code">Agent B</span></div>
+            <div class="subtitle">Playwright</div>
+            <div class="detail">Homepage + up to 8 ranked internal pages. Stops early once the model judges there's already enough evidence.</div>
+          </div>
+          <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
+          <div class="node">
+            <div class="title-row"><span class="title">Company Researcher</span><span class="code">Agent C</span></div>
+            <div class="subtitle">OpenAI + web_search</div>
+            <div class="detail">Product, audience, positioning, offers — every claim tagged observed / strong inference / hypothesis, with a source.</div>
+          </div>
+          <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
+          <div class="node">
+            <div class="title-row"><span class="title">Competitor Researcher</span><span class="code">Agent D</span></div>
+            <div class="subtitle">OpenAI + web_search</div>
+            <div class="detail">3–5 competitors, compared only for gaps relevant to a Dynamify pitch — not a landscape report.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 03 — ANALYZE -->
+    <section class="phase">
+      <div class="phase-rail"><div class="dot"></div><div class="stem"></div></div>
+      <div class="phase-body">
+        <div class="phase-label"><span class="idx">03</span> · Analyze <span class="mono" style="color:var(--muted); text-transform:none; letter-spacing:0;">— run off the same research, independently</span></div>
+        <div class="node-pair">
+          <div class="node">
+            <div class="title-row"><span class="title">Conversion Analyst</span><span class="code">Agent E</span></div>
+            <div class="subtitle">100-pt Dynamify rubric</div>
+            <div class="detail">Value prop · audience clarity · proof · CTA · friction · offer · message match.</div>
+          </div>
+          <div class="node">
+            <div class="title-row"><span class="title">Personalization Analyst</span><span class="code">Agent F</span></div>
+            <div class="subtitle">8-dimension diversity</div>
+            <div class="detail">Potential score, plus detectability per segment — declared, inferable, or enrichment-only.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 04 — DECIDE -->
+    <section class="phase">
+      <div class="phase-rail"><div class="dot"></div><div class="stem"></div></div>
+      <div class="phase-body">
+        <div class="phase-label"><span class="idx">04</span> · Decide</div>
+        <div class="fanin" aria-hidden="true">
+          <span class="chip">use case</span>
+          <span class="chip">CTA</span>
+          <span class="chip is-primary">industry ✓</span>
+          <span class="chip">offer</span>
+        </div>
+        <div class="node">
+          <div class="title-row"><span class="title">Opportunity Selection</span><span class="code">2–6 candidates</span></div>
+          <div class="subtitle">composite of 5 weighted criteria</div>
+          <div class="detail">Evidence strength · commercial meaningfulness · demonstrability · Dynamify alignment · plausibility.</div>
+          <span class="badge">→ exactly one primary opportunity</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 05 — BUILD DEMO -->
+    <section class="phase">
+      <div class="phase-rail"><div class="dot"></div><div class="stem"></div></div>
+      <div class="phase-body">
+        <div class="phase-label"><span class="idx">05</span> · Build demo</div>
+        <div class="node-stack">
+          <div class="node">
+            <div class="title-row"><span class="title">Demo Strategist</span></div>
+            <div class="subtitle">one page, one segment</div>
+            <div class="detail">Picks the target page + visitor segment, and names what must be preserved (logo, nav, brand voice).</div>
+          </div>
+          <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
+          <div class="node">
+            <div class="title-row"><span class="title">Preview Generator</span></div>
+            <div class="subtitle">bounded DOM patches, not a rewrite</div>
+            <div class="detail">cheerio tags real markup with <span class="mono">data-scout-id</span>; the model edits only those nodes. Layout, CSS and imagery stay byte-for-byte.</div>
+          </div>
+          <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
+          <div class="node-row">
+            <div class="node">
+              <div class="title-row"><span class="title">Preview QA</span></div>
+              <div class="subtitle">deterministic checks + model pass</div>
+              <div class="detail">Broken selectors, brand consistency, and every changed claim checked back against the opportunity's evidence.</div>
+            </div>
+            <div class="branch is-flag">
+              <svg viewBox="0 0 46 24" width="46" height="24" aria-hidden="true"><line x1="0" y1="12" x2="34" y2="12" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/><polygon points="42,12 32,7 32,17" fill="currentColor"/></svg>
+              <div class="branch-card">fails → not blocked,<br>flagged for the reviewer</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 06 — COMMUNICATE -->
+    <section class="phase">
+      <div class="phase-rail"><div class="dot"></div><div class="stem"></div></div>
+      <div class="phase-body">
+        <div class="phase-label"><span class="idx">06</span> · Communicate</div>
+        <div class="node-stack">
+          <div class="node">
+            <div class="title-row"><span class="title">Internal Report</span></div>
+            <div class="subtitle">AE-facing only</div>
+            <div class="detail">Full opportunity narrative + evidence appendix. Never sent to the prospect.</div>
+          </div>
+          <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
+          <div class="node">
+            <div class="title-row"><span class="title">Outreach Draft</span></div>
+            <div class="subtitle">plain text · &lt;120 words</div>
+            <div class="detail">No link, image, or attachment. The preview is offered only once the prospect asks.</div>
+          </div>
+          <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
+          <div class="node-row">
+            <div class="node is-gate">
+              <div class="title-row"><span class="title">Human Approval</span></div>
+              <div class="subtitle">the only path that can authorize a send</div>
+            </div>
+            <div class="branch">
+              <svg viewBox="0 0 46 24" width="46" height="24" aria-hidden="true"><line x1="0" y1="12" x2="34" y2="12" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/><polygon points="42,12 32,7 32,17" fill="currentColor"/></svg>
+              <div class="branch-card">reject<br>→ back to draft</div>
+            </div>
+          </div>
+          <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
+          <div class="node">
+            <div class="title-row"><span class="title">Send</span></div>
+            <div class="subtitle">email provider — log or Resend</div>
+            <div class="detail">One function in the whole codebase can call this, and it refuses anything not already <span class="mono">approved</span>.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHASE 07 — LEARN -->
+    <section class="phase is-learn">
+      <div class="phase-rail"><div class="dot"></div></div>
+      <div class="phase-body" style="padding-bottom:0;">
+        <div class="phase-label"><span class="idx">07</span> · Learn</div>
+        <div class="node-pair">
+          <div class="node" style="border-left-color:var(--store);">
+            <div class="title-row"><span class="title">Reply Tracking</span></div>
+            <div class="subtitle" style="color:var(--store);">sentiment + next action</div>
+          </div>
+          <div class="node" style="border-left-color:var(--store);">
+            <div class="title-row"><span class="title">CRM Outcome</span></div>
+            <div class="subtitle" style="color:var(--store);">demo booked → closed won/lost</div>
+          </div>
+        </div>
+        <div class="flow" aria-hidden="true" style="color:var(--line-strong);"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
+        <div class="node is-store">
+          <div class="title-row"><span class="title">Eval Dataset</span><span class="code">eval_records</span></div>
+          <div class="detail">ICP score · conversion score · personalization score · opportunity type · outcome, joined per lead.</div>
+          <div class="feedback">↻ informs how Agent A scores fit, over time</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="runtime">
+    <h2>Runtime</h2>
+    <div class="tag-row">
+      <span class="tag">Next.js dashboard</span>
+      <span class="tag">Postgres + Drizzle</span>
+      <span class="tag">pg-boss queue</span>
+      <span class="tag">OpenAI Responses API</span>
+      <span class="tag">Zod structured outputs</span>
+      <span class="tag">Playwright capture</span>
+      <span class="tag">cheerio DOM patching</span>
+    </div>
+  </footer>
+
+</div>
