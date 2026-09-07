@@ -4,9 +4,14 @@
  * Mirrors the pipeline in the product spec end to end:
  *   Lead -> ICP qualification -> website acquisition/exploration -> company
  *   research -> competitor research -> conversion analysis -> personalization
- *   analysis -> opportunity selection -> demo strategy -> preview generation
- *   -> preview QA -> internal report -> outreach draft -> human approval ->
- *   outreach send -> reply tracking -> CRM outcome -> eval dataset.
+ *   analysis -> opportunity selection -> internal report -> outreach draft ->
+ *   human approval -> outreach send -> reply tracking -> CRM outcome -> eval
+ *   dataset.
+ *
+ * Scout researches and analyzes a prospect and drafts outreach whose goal is
+ * to book a meeting — it does not generate an actual demo page. The demo
+ * shown on that call is the real Dynamify product running on the prospect's
+ * site, not an artifact Scout produces.
  *
  * Every agent-produced table keeps its raw structured output in a `raw`
  * jsonb column alongside normalized columns used by the UI, so nothing the
@@ -38,7 +43,6 @@ export const leadStatusEnum = pgEnum("lead_status", [
   "researching",
   "analyzing",
   "opportunity_selected",
-  "preview_ready",
   "report_ready",
   "outreach_drafted",
   "pending_approval",
@@ -61,9 +65,6 @@ export const pipelineStageEnum = pgEnum("pipeline_stage", [
   "personalization_analysis",
   "opportunity_scoring",
   "opportunity_selection",
-  "demo_strategy",
-  "preview_generation",
-  "preview_qa",
   "internal_report",
   "outreach_draft",
   "human_approval",
@@ -109,21 +110,6 @@ export const opportunityTypeEnum = pgEnum("opportunity_type", [
   "cta_personalization",
   "offer_personalization",
   "conversion_message_optimization",
-]);
-
-export const previewStatusEnum = pgEnum("preview_status", [
-  "draft",
-  "qa_failed",
-  "qa_passed",
-  "approved",
-]);
-
-export const qaCheckTypeEnum = pgEnum("qa_check_type", [
-  "brand_consistency",
-  "factual_accuracy",
-  "broken_link",
-  "responsive_rendering",
-  "no_unsupported_claims",
 ]);
 
 export const outreachStatusEnum = pgEnum("outreach_status", [
@@ -508,104 +494,9 @@ export const opportunities = pgTable(
   (table) => [index("opportunities_lead_idx").on(table.leadId)],
 );
 
-export const opportunitiesRelations = relations(opportunities, ({ one, many }) => ({
+export const opportunitiesRelations = relations(opportunities, ({ one }) => ({
   lead: one(leads, { fields: [opportunities.leadId], references: [leads.id] }),
-  demoStrategy: one(demoStrategies, {
-    fields: [opportunities.id],
-    references: [demoStrategies.opportunityId],
-  }),
-  previews: many(previews),
 }));
-
-// ---------------------------------------------------------------------------
-// Demo strategy + preview generation/QA
-// ---------------------------------------------------------------------------
-
-export type PlannedChange = {
-  section: string;
-  change: string;
-  rationale: string;
-};
-
-export const demoStrategies = pgTable("demo_strategies", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  leadId: uuid("lead_id")
-    .notNull()
-    .references(() => leads.id, { onDelete: "cascade" }),
-  opportunityId: uuid("opportunity_id")
-    .notNull()
-    .references(() => opportunities.id, { onDelete: "cascade" })
-    .unique(),
-  targetPageUrl: text("target_page_url").notNull(),
-  targetSegment: text("target_segment").notNull(),
-  narrativeSummary: text("narrative_summary").notNull(),
-  preserveElements: jsonb("preserve_elements").$type<string[]>().notNull(),
-  plannedChanges: jsonb("planned_changes").$type<PlannedChange[]>().notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
-
-export type Rect = { x: number; y: number; width: number; height: number };
-
-/**
- * One changed element, in full-page-screenshot pixel coordinates, on both
- * the before and after render. Powers the highlight-overlay in the preview
- * compare UI — a rect is null when that element couldn't be located on that
- * particular render (e.g. a section the patch removed entirely).
- */
-export type ChangeRegion = {
-  section: string;
-  selector: string;
-  change: string;
-  rationale: string;
-  beforeRect: Rect | null;
-  afterRect: Rect | null;
-};
-
-export const previews = pgTable(
-  "previews",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    leadId: uuid("lead_id")
-      .notNull()
-      .references(() => leads.id, { onDelete: "cascade" }),
-    opportunityId: uuid("opportunity_id")
-      .notNull()
-      .references(() => opportunities.id, { onDelete: "cascade" }),
-    demoStrategyId: uuid("demo_strategy_id")
-      .notNull()
-      .references(() => demoStrategies.id, { onDelete: "cascade" }),
-    targetPageUrl: text("target_page_url").notNull(),
-    beforeHtmlPath: text("before_html_path").notNull(),
-    beforeScreenshotPath: text("before_screenshot_path"),
-    afterHtmlPath: text("after_html_path").notNull(),
-    afterScreenshotPath: text("after_screenshot_path"),
-    changesSummary: jsonb("changes_summary").$type<PlannedChange[]>().notNull(),
-    changeRegions: jsonb("change_regions").$type<ChangeRegion[]>().notNull().default([]),
-    status: previewStatusEnum("status").notNull().default("draft"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (table) => [index("previews_lead_idx").on(table.leadId)],
-);
-
-export const previewsRelations = relations(previews, ({ one, many }) => ({
-  lead: one(leads, { fields: [previews.leadId], references: [leads.id] }),
-  opportunity: one(opportunities, {
-    fields: [previews.opportunityId],
-    references: [opportunities.id],
-  }),
-  qaChecks: many(previewQaChecks),
-}));
-
-export const previewQaChecks = pgTable("preview_qa_checks", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  previewId: uuid("preview_id")
-    .notNull()
-    .references(() => previews.id, { onDelete: "cascade" }),
-  checkType: qaCheckTypeEnum("check_type").notNull(),
-  passed: boolean("passed").notNull(),
-  notes: text("notes"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
 
 // ---------------------------------------------------------------------------
 // Internal report

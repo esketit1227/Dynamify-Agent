@@ -40,8 +40,10 @@ Sections:
   narrative for the one selected opportunity — this is the core of the report.
 - competitorContext: 2-4 sentences on where competitors are ahead or behind on
   audience-specificity/personalization, only if genuinely useful context.
-- recommendedNextSteps: what the AE should do (e.g. reference the specific preview
-  page, lead with X in the first call).
+- recommendedNextSteps: what the AE should do — e.g. what to lead with in the outreach
+  and the first call, and what to actually show live in the Dynamify demo once a
+  meeting is booked (there is no pre-built preview; the demo is the real product
+  running on the prospect's own site during that call).
 
 evidenceAppendix should compile the most important sourced findings across all inputs
 (observed/strong_inference/hypothesis), so a skeptical AE can check the work.

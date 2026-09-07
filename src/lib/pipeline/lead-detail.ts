@@ -15,9 +15,6 @@ import {
   conversionScores,
   personalizationAnalyses,
   opportunities,
-  demoStrategies,
-  previews,
-  previewQaChecks,
   reports,
   outreachDrafts,
   replies,
@@ -39,8 +36,6 @@ export async function getLeadDetail(leadId: string) {
     conversion,
     personalization,
     opps,
-    strategies,
-    previewRows,
     reportRows,
     outreach,
     replyRows,
@@ -59,11 +54,6 @@ export async function getLeadDetail(leadId: string) {
     db.query.opportunities.findMany({
       where: eq(opportunities.leadId, leadId),
       orderBy: [desc(opportunities.compositeScore)],
-    }),
-    db.query.demoStrategies.findMany({ where: eq(demoStrategies.leadId, leadId) }),
-    db.query.previews.findMany({
-      where: eq(previews.leadId, leadId),
-      orderBy: [desc(previews.createdAt)],
     }),
     db.query.reports.findMany({
       where: eq(reports.leadId, leadId),
@@ -88,14 +78,6 @@ export async function getLeadDetail(leadId: string) {
     }),
   ]);
 
-  const qaChecksByPreview = new Map<string, Awaited<ReturnType<typeof db.query.previewQaChecks.findMany>>>();
-  for (const preview of previewRows) {
-    const checks = await db.query.previewQaChecks.findMany({
-      where: eq(previewQaChecks.previewId, preview.id),
-    });
-    qaChecksByPreview.set(preview.id, checks);
-  }
-
   const latestRun = runs[0];
   const stageEvents = latestRun
     ? await db.query.pipelineStageEvents.findMany({
@@ -114,8 +96,6 @@ export async function getLeadDetail(leadId: string) {
     conversion: conversion ?? null,
     personalization: personalization ?? null,
     opportunities: opps,
-    demoStrategies: strategies,
-    previews: previewRows.map((p) => ({ ...p, qaChecks: qaChecksByPreview.get(p.id) ?? [] })),
     reports: reportRows,
     outreach,
     replies: replyRows,

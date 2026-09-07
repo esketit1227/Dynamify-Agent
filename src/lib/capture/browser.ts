@@ -1,8 +1,8 @@
 /**
- * Deterministic browser capture used by the Website Explorer (Agent B) and
- * by Preview QA. Chromium is expected to already be installed in this
- * environment (see PLAYWRIGHT_BROWSERS_PATH) — we never call
- * `playwright install` at runtime.
+ * Deterministic browser capture used by the Website Explorer (Agent B).
+ * Chromium is expected to already be installed in this environment (see
+ * PLAYWRIGHT_BROWSERS_PATH) — we never call `playwright install` at
+ * runtime.
  */
 import { chromium, type Browser, type Page } from "playwright";
 
@@ -108,65 +108,6 @@ export async function capturePage(url: string): Promise<PageCapture> {
     const mobileScreenshotPng = await page.screenshot({ fullPage: true });
 
     return { ...extracted, screenshotPng, mobileScreenshotPng };
-  } finally {
-    await context.close();
-  }
-}
-
-/** Render arbitrary HTML (e.g. a generated preview variant) and screenshot it. */
-export async function renderHtmlToScreenshot(html: string): Promise<Buffer> {
-  const { screenshotPng } = await renderHtmlWithRegions(html, []);
-  return screenshotPng;
-}
-
-export interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export interface RenderWithRegionsResult {
-  screenshotPng: Buffer;
-  /** Full-page-screenshot-relative bounding box per selector, or null if the selector matched nothing/was hidden. */
-  regions: Record<string, Rect | null>;
-  /** The full page's rendered pixel size — regions are in this coordinate space. */
-  pageSize: { width: number; height: number };
-}
-
-/**
- * Renders HTML and, in the same pass, captures each given selector's
- * bounding box in full-page-screenshot coordinates. Used to draw "what
- * changed" highlight boxes over a preview's before/after screenshots
- * without a second, possibly-inconsistent render.
- */
-export async function renderHtmlWithRegions(
-  html: string,
-  selectors: string[],
-): Promise<RenderWithRegionsResult> {
-  const browser = await getBrowser();
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-  try {
-    const page = await context.newPage();
-    await page.setContent(html, { waitUntil: "networkidle", timeout: 30_000 });
-
-    const regions: Record<string, Rect | null> = {};
-    for (const selector of selectors) {
-      try {
-        const box = await page.locator(selector).first().boundingBox({ timeout: 2000 });
-        regions[selector] = box;
-      } catch {
-        regions[selector] = null;
-      }
-    }
-
-    const screenshotPng = await page.screenshot({ fullPage: true });
-    const pageSize = await page.evaluate(() => ({
-      width: document.documentElement.scrollWidth,
-      height: document.documentElement.scrollHeight,
-    }));
-
-    return { screenshotPng, regions, pageSize };
   } finally {
     await context.close();
   }

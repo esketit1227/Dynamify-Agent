@@ -14,9 +14,10 @@ export interface ReplyClassifierInput {
 
 const INSTRUCTIONS = `You are the Reply Classifier for Dynamify Scout. Given the original
 outreach email and a prospect's reply, classify sentiment (interested / wants_more_info
-/ not_interested / out_of_office / unsubscribe / unknown), whether they're asking to see
-the demo/preview/work ("wantsDemo"), and a one-sentence recommended nextAction for the
-Dynamify salesperson (e.g. "Send the personalized preview and offer times for a demo.").`;
+/ not_interested / out_of_office / unsubscribe / unknown), whether they're willing to
+book a meeting/call to see the Dynamify demo live ("wantsDemo"), and a one-sentence
+recommended nextAction for the Dynamify salesperson (e.g. "Propose 2-3 times this week
+for a 20-minute call.").`;
 
 export async function classifyReply(
   input: ReplyClassifierInput,

@@ -3,10 +3,13 @@
  *
  * Runs a lead through every automatic stage — ICP qualification, website
  * exploration, company/competitor research, conversion + personalization
- * analysis, opportunity selection, demo strategy, preview generation + QA,
- * the internal report, and the outreach draft — then stops. Sending
- * outreach always requires a separate, explicit human approval action (see
- * src/lib/pipeline/send-outreach.ts); this orchestrator never sends email.
+ * analysis, opportunity selection, the internal report, and the outreach
+ * draft — then stops. Scout researches and analyzes; it does not build a
+ * demo. The outreach draft's goal is to book a meeting where the real
+ * Dynamify product is shown live, not to offer an AI-generated preview.
+ * Sending outreach always requires a separate, explicit human approval
+ * action (see src/lib/pipeline/send-outreach.ts); this orchestrator never
+ * sends email.
  *
  * Each stage is wrapped by `runStage`, which persists a
  * `pipeline_stage_events` row with the stage's input/output, so the whole
@@ -25,13 +28,9 @@ import {
   conversionScores,
   personalizationAnalyses,
   opportunities,
-  demoStrategies,
-  previews,
-  previewQaChecks,
   reports,
   outreachDrafts,
   type WebsiteMapPage,
-  type ChangeRegion,
 } from "@/lib/db/schema";
 import { runStage } from "./stage-runner";
 import { qualifyIcp } from "@/lib/agents/icp-qualifier";
@@ -41,13 +40,8 @@ import { researchCompetitors } from "@/lib/agents/competitor-researcher";
 import { analyzeConversion } from "@/lib/agents/conversion-analyst";
 import { analyzePersonalization } from "@/lib/agents/personalization-analyst";
 import { selectOpportunity } from "@/lib/agents/opportunity-selector";
-import { planDemoStrategy } from "@/lib/agents/demo-strategist";
-import { generatePreview } from "@/lib/agents/preview-generator";
-import { runPreviewQa } from "@/lib/agents/preview-qa";
 import { generateReport } from "@/lib/agents/report-generator";
 import { draftOutreach } from "@/lib/agents/outreach-drafter";
-import { preparePage, applyPatches } from "@/lib/preview/html";
-import { renderHtmlWithRegions } from "@/lib/capture/browser";
 import { getStorage } from "@/lib/capture/storage";
 
 async function setLeadStatus(leadId: string, status: (typeof leads.$inferInsert)["status"]) {
@@ -293,136 +287,6 @@ export async function runLeadPipeline(leadId: string): Promise<{ pipelineRunId: 
     const primaryOpportunityCandidate = selection.candidates[selection.primaryIndex]!;
 
     await setLeadStatus(leadId, "opportunity_selected");
-
-    // -------------------------------------------------------------------
-    // Demo strategy
-    // -------------------------------------------------------------------
-    const targetPageUrl = homepagePage.url;
-    const homepageHtmlBuffer = await storage.read(homepagePage.htmlStorageKey);
-    const prepared = preparePage(homepageHtmlBuffer.toString("utf-8"), targetPageUrl);
-
-    const strategy = await runStage({
-      pipelineRunId,
-      leadId,
-      stage: "demo_strategy",
-      fn: () =>
-        planDemoStrategy({
-          companyName: lead.companyName,
-          primaryOpportunity: primaryOpportunityCandidate,
-          targetPageUrl,
-          targetPageOutline: prepared.outline,
-        }),
-    });
-
-    const [demoStrategyRow] = await db
-      .insert(demoStrategies)
-      .values({
-        leadId,
-        opportunityId: primaryOpportunityRow.id,
-        targetPageUrl: strategy.targetPageUrl,
-        targetSegment: strategy.targetSegment,
-        narrativeSummary: strategy.narrativeSummary,
-        preserveElements: strategy.preserveElements,
-        plannedChanges: strategy.plannedChanges,
-      })
-      .returning();
-
-    // -------------------------------------------------------------------
-    // Preview generation (design-preserving DOM patches)
-    // -------------------------------------------------------------------
-    const previewGen = await runStage({
-      pipelineRunId,
-      leadId,
-      stage: "preview_generation",
-      fn: () =>
-        generatePreview({
-          companyName: lead.companyName,
-          demoStrategy: strategy,
-          pageOutline: prepared.outline,
-        }),
-    });
-
-    const patchResult = applyPatches(prepared.annotatedHtml, previewGen.patches);
-
-    // Capture bounding boxes for every patched selector on both the before
-    // and after render, in the same pass as the screenshot — this is what
-    // lets the dashboard draw "exactly what changed" highlight boxes
-    // instead of just a side-by-side image.
-    const patchedSelectors = Array.from(new Set(previewGen.patches.map((p) => p.selector)));
-    const [beforeRender, afterRender] = await Promise.all([
-      renderHtmlWithRegions(prepared.annotatedHtml, patchedSelectors),
-      renderHtmlWithRegions(patchResult.html, patchedSelectors),
-    ]);
-
-    const changeRegions: ChangeRegion[] = previewGen.patches.map((patch) => {
-      const summary = previewGen.changesSummary.find((c) => c.section === patch.section);
-      return {
-        section: patch.section,
-        selector: patch.selector,
-        change: summary?.change ?? `${patch.action.replace(/_/g, " ")}: ${patch.value ?? ""}`.trim(),
-        rationale: summary?.rationale ?? "",
-        beforeRect: beforeRender.regions[patch.selector] ?? null,
-        afterRect: afterRender.regions[patch.selector] ?? null,
-      };
-    });
-
-    const previewBase = `leads/${leadId}/previews/${demoStrategyRow!.id}`;
-    const [beforeHtmlKey, afterHtmlKey, beforeShotKey, afterShotKey] = await Promise.all([
-      storage.put(`${previewBase}/before.html`, prepared.annotatedHtml, "text/html"),
-      storage.put(`${previewBase}/after.html`, patchResult.html, "text/html"),
-      storage.put(`${previewBase}/before.png`, beforeRender.screenshotPng, "image/png"),
-      storage.put(`${previewBase}/after.png`, afterRender.screenshotPng, "image/png"),
-    ]);
-
-    const [previewRow] = await db
-      .insert(previews)
-      .values({
-        leadId,
-        opportunityId: primaryOpportunityRow.id,
-        demoStrategyId: demoStrategyRow!.id,
-        targetPageUrl,
-        beforeHtmlPath: storage.locate(beforeHtmlKey),
-        beforeScreenshotPath: storage.locate(beforeShotKey),
-        afterHtmlPath: storage.locate(afterHtmlKey),
-        afterScreenshotPath: storage.locate(afterShotKey),
-        changesSummary: previewGen.changesSummary,
-        changeRegions,
-        status: "draft",
-      })
-      .returning();
-
-    // -------------------------------------------------------------------
-    // Preview QA
-    // -------------------------------------------------------------------
-    const qa = await runStage({
-      pipelineRunId,
-      leadId,
-      stage: "preview_qa",
-      fn: () =>
-        runPreviewQa({
-          companyName: lead.companyName,
-          afterHtml: patchResult.html,
-          changesSummary: previewGen.changesSummary,
-          supportingEvidence: primaryOpportunityCandidate.evidence,
-          skippedPatchCount: patchResult.skipped.length,
-        }),
-    });
-
-    await db.insert(previewQaChecks).values(
-      qa.checks.map((c) => ({
-        previewId: previewRow!.id,
-        checkType: c.checkType,
-        passed: c.passed,
-        notes: c.notes,
-      })),
-    );
-
-    await db
-      .update(previews)
-      .set({ status: qa.overallPassed ? "qa_passed" : "qa_failed" })
-      .where(eq(previews.id, previewRow!.id));
-
-    await setLeadStatus(leadId, "preview_ready");
 
     // -------------------------------------------------------------------
     // Internal report

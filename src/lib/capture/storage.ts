@@ -1,8 +1,8 @@
 /**
- * Object storage abstraction for captured screenshots/HTML snapshots and
- * generated preview assets. Defaults to local disk for development;
- * `STORAGE_DRIVER=s3` switches to an S3-compatible bucket without any
- * caller changing code — every agent module only depends on this interface.
+ * Object storage abstraction for captured website screenshots and HTML
+ * snapshots. Defaults to local disk for development; `STORAGE_DRIVER=s3`
+ * switches to an S3-compatible bucket without any caller changing code —
+ * every agent module only depends on this interface.
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";

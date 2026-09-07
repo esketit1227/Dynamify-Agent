@@ -1,7 +1,7 @@
 /**
- * Selects the single primary personalization opportunity for the demo, per
- * product principle 1.3. Scout may surface many candidate opportunities,
- * but exactly one is chosen to drive the preview, report, and outreach.
+ * Selects the single primary personalization opportunity, per product
+ * principle 1.3. Scout may surface many candidate opportunities, but
+ * exactly one is chosen to drive the internal report and the outreach.
  *
  * The model proposes candidates and scores each against the five explicit
  * selection criteria; we compute the composite score deterministically (a
@@ -58,15 +58,18 @@ everything 80-90):
   speculation
 - commercialMeaningfulness: how much this would plausibly move a real business metric
   for this company
-- demonstrability: how easy this is to show convincingly in a single before/after page
-  preview
+- demonstrability: how easy this would be to show convincingly live, on the prospect's
+  real site, in a short Dynamify demo call — a clear before/after story a salesperson
+  could walk through in a few minutes, not something that needs a lot of setup or
+  hand-waving to land
 - dynamifyAlignment: how closely this matches what Dynamify's product actually does
   (recognizing visitor signals to dynamically change copy/imagery/proof/CTA/offer),
   versus a generic redesign suggestion unrelated to personalization
 - plausibility: how confident you are this isn't built on invented facts
 
-Set primaryIndex to the candidate you'd choose as the one primary opportunity to build
-the demo around, and explain the selection rationale referencing the criteria above.`;
+Set primaryIndex to the candidate you'd choose as the one primary opportunity to lead
+the outreach and the sales conversation with, and explain the selection rationale
+referencing the criteria above.`;
 
 const WEIGHTS = {
   evidenceStrength: 0.25,

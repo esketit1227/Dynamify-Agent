@@ -2,7 +2,7 @@
   "name": "dynamify-scout",
   "version": "0.1.0",
   "private": true,
-  "description": "Dynamify Scout — internal AI prospect-research and personalized-demo generation system.",
+  "description": "Dynamify Scout — internal AI prospect-research and outreach system.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -16,8 +16,6 @@
     "worker": "tsx src/lib/queue/worker.ts"
   },
   "dependencies": {
-    "cheerio": "^1.2.0",
-    "domhandler": "^6.0.1",
     "drizzle-orm": "^0.45.2",
     "next": "^15.5.4",
     "openai": "^6.9.0",

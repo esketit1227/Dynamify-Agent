@@ -1,5 +1,5 @@
 /**
- * Serves locally-stored captures/previews (screenshots, HTML snapshots) for
+ * Serves locally-stored website captures (screenshots, HTML snapshots) for
  * the dashboard when STORAGE_DRIVER=local. An S3-backed deployment would
  * instead have `storage.locate()` return real (signed) URLs and this route
  * would go unused.

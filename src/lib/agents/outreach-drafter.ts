@@ -1,9 +1,11 @@
 /**
  * Outreach Drafter — writes the first-touch email. Per product spec, this
  * must be short, plain text, and contain NO image, NO attachment, and NO
- * link. The preview/demo is offered, not shown, until the prospect asks —
- * this draft always goes through a human approval gate before it can be
- * sent (see src/lib/email/provider.ts and the outreach API routes).
+ * link. Scout doesn't build a demo — the goal of this email is to earn a
+ * reply that leads to a meeting where a Dynamify salesperson shows the real
+ * product running live. This draft always goes through a human approval
+ * gate before it can be sent (see src/lib/email/provider.ts and the
+ * outreach API routes).
  */
 import { runStructured } from "./openai-client";
 import { outreachDraftOutput, type OutreachDraftOutput } from "./schemas";
@@ -24,15 +26,19 @@ cold email from a Dynamify salesperson to a prospect.
 Hard constraints — the email must:
 - be short (under ~120 words in the body)
 - be plain text only — no markdown, no HTML, no image, no attachment reference
-- contain NO links or URLs of any kind (not even the prospect's own domain) and NOT
-  mention having built a demo/preview yet — the goal is to start a conversation, the
-  personalized preview is offered only after they reply
+- contain NO links or URLs of any kind (not even the prospect's own domain)
+- never claim to have already built anything for them (no "preview," "demo," or
+  "mockup" you supposedly made) — Scout doesn't build a demo; what exists is research
+  and an opinion about their site, and that's exactly what the email should say it is
 - sound like a specific person who actually looked at their site, not a template —
   reference one concrete, specific observation tied to the primary opportunity (e.g.
   "your homepage treats construction and healthcare buyers identically" — never vague
   flattery)
-- end with a low-friction, curiosity-driving question or ask (e.g. asking if it's worth
-  a quick look at something), not a hard pitch or meeting-link ask
+- end with a low-friction ask to talk — a short call or a few minutes to walk through
+  what you found and show how Dynamify would actually handle it live on their site.
+  This is a real ask for time, not a vague "worth a look?" — but keep it soft and
+  specific (e.g. "worth 15 minutes this week?"), never a hard pitch, never a
+  scheduling link (there are no links allowed at all)
 - never invent facts about the recipient or company beyond what's in the opportunity
   given to you
 - have no salesy subject line — short, specific, lower-case-normal, like a person wrote it

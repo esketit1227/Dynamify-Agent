@@ -334,8 +334,9 @@
     <h1>Dynamify Scout Pipeline</h1>
     <p class="dek">
       How one lead moves through Scout's agent system — from an unqualified domain to a
-      demo-ready outreach draft. <b>19 stages</b>, <b>6 named agents</b> (A–F), and exactly
-      <b>one human checkpoint</b> before anything reaches a prospect's inbox.
+      meeting-ready outreach draft. <b>6 named agents</b> (A–F) research and analyze; Scout
+      never builds a demo. Exactly <b>one human checkpoint</b> before anything reaches a
+      prospect's inbox.
     </p>
 
     <div class="legend" role="group" aria-label="Diagram legend">
@@ -451,44 +452,11 @@
       </div>
     </section>
 
-    <!-- PHASE 05 — BUILD DEMO -->
+    <!-- PHASE 05 — COMMUNICATE -->
     <section class="phase">
       <div class="phase-rail"><div class="dot"></div><div class="stem"></div></div>
       <div class="phase-body">
-        <div class="phase-label"><span class="idx">05</span> · Build demo</div>
-        <div class="node-stack">
-          <div class="node">
-            <div class="title-row"><span class="title">Demo Strategist</span></div>
-            <div class="subtitle">one page, one segment</div>
-            <div class="detail">Picks the target page + visitor segment, and names what must be preserved (logo, nav, brand voice).</div>
-          </div>
-          <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
-          <div class="node">
-            <div class="title-row"><span class="title">Preview Generator</span></div>
-            <div class="subtitle">bounded DOM patches, not a rewrite</div>
-            <div class="detail">cheerio tags real markup with <span class="mono">data-scout-id</span>; the model edits only those nodes. Layout, CSS and imagery stay byte-for-byte.</div>
-          </div>
-          <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
-          <div class="node-row">
-            <div class="node">
-              <div class="title-row"><span class="title">Preview QA</span></div>
-              <div class="subtitle">deterministic checks + model pass</div>
-              <div class="detail">Broken selectors, brand consistency, and every changed claim checked back against the opportunity's evidence.</div>
-            </div>
-            <div class="branch is-flag">
-              <svg viewBox="0 0 46 24" width="46" height="24" aria-hidden="true"><line x1="0" y1="12" x2="34" y2="12" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/><polygon points="42,12 32,7 32,17" fill="currentColor"/></svg>
-              <div class="branch-card">fails → not blocked,<br>flagged for the reviewer</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- PHASE 06 — COMMUNICATE -->
-    <section class="phase">
-      <div class="phase-rail"><div class="dot"></div><div class="stem"></div></div>
-      <div class="phase-body">
-        <div class="phase-label"><span class="idx">06</span> · Communicate</div>
+        <div class="phase-label"><span class="idx">05</span> · Communicate <span class="mono" style="color:var(--muted); text-transform:none; letter-spacing:0;">— Scout stops here; it never builds a demo</span></div>
         <div class="node-stack">
           <div class="node">
             <div class="title-row"><span class="title">Internal Report</span></div>
@@ -499,7 +467,7 @@
           <div class="node">
             <div class="title-row"><span class="title">Outreach Draft</span></div>
             <div class="subtitle">plain text · &lt;120 words</div>
-            <div class="detail">No link, image, or attachment. The preview is offered only once the prospect asks.</div>
+            <div class="detail">No link, image, or attachment. The ask is a short call — the real Dynamify product is shown live on the prospect's own site, not sent as a mockup.</div>
           </div>
           <div class="flow" aria-hidden="true"><svg viewBox="0 0 24 26" width="24" height="26"><line x1="12" y1="0" x2="12" y2="18" stroke="currentColor" stroke-width="2"/><polygon points="12,26 6,16 18,16" fill="currentColor"/></svg></div>
           <div class="node-row">
@@ -526,7 +494,7 @@
     <section class="phase is-learn">
       <div class="phase-rail"><div class="dot"></div></div>
       <div class="phase-body" style="padding-bottom:0;">
-        <div class="phase-label"><span class="idx">07</span> · Learn</div>
+        <div class="phase-label"><span class="idx">06</span> · Learn</div>
         <div class="node-pair">
           <div class="node" style="border-left-color:var(--store);">
             <div class="title-row"><span class="title">Reply Tracking</span></div>
@@ -557,7 +525,6 @@
       <span class="tag">OpenAI Responses API</span>
       <span class="tag">Zod structured outputs</span>
       <span class="tag">Playwright capture</span>
-      <span class="tag">cheerio DOM patching</span>
     </div>
   </footer>
 

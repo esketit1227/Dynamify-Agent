@@ -15,7 +15,6 @@ import { RunPipelineButton } from "@/components/run-pipeline-button";
 import { OutreachPanel } from "@/components/lead/outreach-panel";
 import { ReplyForm } from "@/components/lead/reply-form";
 import { OutcomeForm } from "@/components/lead/outcome-form";
-import { PreviewCompare } from "@/components/lead/preview-compare";
 
 const STAGE_STATUS_DOT: Record<string, string> = {
   pending: "bg-ink-600",
@@ -44,7 +43,6 @@ export default async function LeadDetailPage({
     conversion,
     personalization,
     opportunities,
-    previews,
     reports,
     outreach,
     replies,
@@ -54,7 +52,6 @@ export default async function LeadDetailPage({
   } = detail;
 
   const primaryOpportunity = opportunities.find((o) => o.isPrimary) ?? opportunities[0] ?? null;
-  const latestPreview = previews[0] ?? null;
   const latestReport = reports[0] ?? null;
   const latestRun = runs[0] ?? null;
 
@@ -401,7 +398,7 @@ export default async function LeadDetailPage({
         <Card>
           <SectionHeading
             title="Opportunities"
-            subtitle="Scout identifies several, then selects exactly one primary opportunity to build the demo around"
+            subtitle="Scout identifies several, then selects exactly one primary opportunity to lead the outreach with"
           />
           <div className="space-y-3 p-5">
             {opportunities.map((o) => (
@@ -456,44 +453,6 @@ export default async function LeadDetailPage({
                 )}
               </div>
             ))}
-          </div>
-        </Card>
-      )}
-
-      {latestPreview && (
-        <Card>
-          <SectionHeading
-            title="Preview"
-            subtitle={latestPreview.targetPageUrl}
-            right={<StatusBadge status={latestPreview.status} />}
-          />
-          <div className="p-5">
-            <PreviewCompare
-              beforeScreenshotPath={latestPreview.beforeScreenshotPath}
-              afterScreenshotPath={latestPreview.afterScreenshotPath}
-              beforeHtmlPath={latestPreview.beforeHtmlPath}
-              afterHtmlPath={latestPreview.afterHtmlPath}
-              changeRegions={latestPreview.changeRegions}
-              changesSummary={latestPreview.changesSummary}
-            />
-          </div>
-          <div className="border-t border-ink-800 p-5">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
-              QA checks
-            </h3>
-            <ul className="grid grid-cols-1 gap-1.5 text-xs sm:grid-cols-2">
-              {latestPreview.qaChecks.map((c) => (
-                <li key={c.id} className="flex items-start gap-2">
-                  <span className={c.passed ? "text-emerald-400" : "text-red-400"}>
-                    {c.passed ? "✓" : "✗"}
-                  </span>
-                  <div>
-                    <span className="font-medium text-ink-200">{c.checkType.replace(/_/g, " ")}: </span>
-                    <span className="text-ink-400">{c.notes}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
           </div>
         </Card>
       )}
@@ -557,7 +516,7 @@ export default async function LeadDetailPage({
                 <div className="mb-1 flex items-center gap-2 text-xs">
                   <span className="rounded bg-ink-800 px-1.5 py-0.5 uppercase text-ink-300">{r.direction}</span>
                   <span className="text-ink-400">{r.sentiment.replace(/_/g, " ")}</span>
-                  {r.wantsDemo && <span className="text-emerald-400">wants demo</span>}
+                  {r.wantsDemo && <span className="text-emerald-400">wants a demo call</span>}
                   <span className="ml-auto text-ink-600">{new Date(r.occurredAt).toLocaleString()}</span>
                 </div>
                 <p className="text-ink-300">{r.bodyText}</p>

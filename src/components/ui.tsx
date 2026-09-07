@@ -7,7 +7,6 @@ const STATUS_STYLES: Record<string, string> = {
   researching: "bg-amber-950 text-amber-300",
   analyzing: "bg-amber-950 text-amber-300",
   opportunity_selected: "bg-sky-950 text-sky-300",
-  preview_ready: "bg-sky-950 text-sky-300",
   report_ready: "bg-sky-950 text-sky-300",
   outreach_drafted: "bg-violet-950 text-violet-300",
   pending_approval: "bg-violet-950 text-violet-300",

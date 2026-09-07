@@ -1,29 +1,31 @@
 # Dynamify Scout
 
-An internal AI prospect-research and personalized-demo generation system for
-Dynamify. Scout independently researches a prospective customer's website,
-identifies the single strongest conversion/personalization opportunity,
-builds a design-preserving before/after preview of one page, and drafts a
-short first-touch outreach email — all before a human ever has to open the
-prospect's site themselves.
+An internal AI prospect-research and outreach system for Dynamify. Scout
+independently researches a prospective customer's website, identifies the
+single strongest conversion/personalization opportunity, writes an internal
+analysis of what it found, and drafts a short first-touch outreach email —
+all before a human ever has to open the prospect's site themselves.
 
-Scout is **not** the Dynamify product. It's the outbound engine that proves
-Dynamify's thesis (autonomous website personalization) is easy to demonstrate
-for a given prospect, then prepares the evidence to start a sales
-conversation.
+Scout does **not** build a demo. It researches and writes the case for one.
+The goal of the outreach is to book a meeting where a Dynamify salesperson
+shows the real product — actually running, live, on the prospect's own
+site — not an AI-generated mockup. Scout is not the Dynamify product either;
+it's the outbound engine that finds companies where Dynamify's thesis
+(autonomous website personalization) is easy to demonstrate, then prepares
+the evidence and the meeting.
 
 **[docs/pipeline.html](./docs/pipeline.html)** is a full visual map of the
-19-stage pipeline below — open it in a browser for the diagram version of
-this README.
+pipeline below — open it in a browser for the diagram version of this
+README.
 
 ## Pipeline
 
 ```
 Lead → ICP qualification → website acquisition/exploration → company
 research → competitor research → conversion analysis → personalization
-analysis → opportunity scoring/selection → demo strategy → preview
-generation → preview QA → internal report → outreach draft → [human
-approval] → outreach send → reply tracking → CRM outcome → eval dataset
+analysis → opportunity scoring/selection → internal report → outreach
+draft → [human approval] → outreach send → reply tracking → CRM outcome →
+eval dataset
 ```
 
 Everything up to and including the outreach draft runs automatically
@@ -51,9 +53,9 @@ a draft's status is `approved`.
   fails loudly instead of writing bad data. Research agents can use the
   hosted `web_search` tool; writing agents (report, outreach) don't need it.
 - **Playwright** (`src/lib/capture`) — deterministic browser capture for the
-  Website Explorer and for rendering preview screenshots. Chromium is
-  expected to already be installed (`PLAYWRIGHT_BROWSERS_PATH`) — nothing in
-  this codebase calls `playwright install`.
+  Website Explorer (homepage + internal pages, screenshots, nav structure).
+  Chromium is expected to already be installed (`PLAYWRIGHT_BROWSERS_PATH`)
+  — nothing in this codebase calls `playwright install`.
 - **Zod** (`src/lib/agents/schemas.ts`) — the typed contract for every
   agent's input/output, shared between the OpenAI structured-output config
   and the Drizzle schema's `$type<...>()` jsonb columns.
@@ -69,44 +71,14 @@ a draft's status is `approved`.
 | `conversion-analyst.ts` | Agent E — the 100-point Dynamify scoring framework |
 | `personalization-analyst.ts` | Agent F — 8-dimension diversity assessment + detectability |
 | `opportunity-selector.ts` | Selects exactly one primary opportunity (spec 1.3 criteria) |
-| `demo-strategist.ts` | Plans the before/after preview for the primary opportunity |
-| `preview-generator.ts` | Produces bounded DOM patches (not a full HTML rewrite) |
-| `preview-qa.ts` | Deterministic + model checks before a human sees the preview |
 | `report-generator.ts` | Internal-only analysis report |
-| `outreach-drafter.ts` | Short, plain-text, link-free first-touch email |
+| `outreach-drafter.ts` | Short, plain-text, link-free first-touch email that asks to book a meeting |
 | `reply-classifier.ts` | Sentiment/next-action classification for logged replies |
 
-### Design-preserving previews
-
-Section 1.4 of the product spec is the trickiest constraint: the generated
-page must look like the prospect's own site, "but smarter" — never an
-unrelated redesign. `src/lib/preview/html.ts` is how that's enforced
-mechanically rather than just by prompting:
-
-1. `preparePage()` loads the real captured HTML with `cheerio`, strips
-   `<script>` tags (a static preview doesn't need them, and it keeps the
-   preview safe to render), injects a `<base href>` so relative CSS/image/
-   font URLs keep resolving against the real site, and tags every
-   text-bearing/interactive element with a stable `data-scout-id`.
-2. The model sees a compact **outline** of just those tagged elements — not
-   the full page markup — and returns a bounded list of DOM patches
-   (`set_text` / `set_html` / `set_attribute` / `remove`), each addressed by
-   `[data-scout-id="…"]`.
-3. `applyPatches()` applies them to the prepared HTML. Everything the model
-   wasn't explicitly asked to change — logo, layout, CSS, imagery, nav — is
-   untouched byte-for-byte.
-
-Because every patch is addressed by a stable selector, the same selectors
-double as a way to show the diff: `renderHtmlWithRegions()`
-(`src/lib/capture/browser.ts`) captures each patched element's bounding box
-on both the before and after render, in the same pass as the screenshot.
-The dashboard's preview compare (`src/components/lead/preview-compare.tsx`)
-uses those regions to draw numbered highlight boxes directly on the
-screenshots — hovering a box or a change-list entry highlights the other —
-plus a drag-to-reveal before/after slider. This is exact, not estimated:
-the boxes come from the real rendered layout, so a patch that reflows the
-page (a longer subhead pushing the CTA down) shows the box in its real,
-shifted position on the "after" render.
+Scout deliberately stops at the outreach draft. It does not plan, generate,
+or QA a demo page — the "demo" a prospect eventually sees is the real
+Dynamify product running live on their own site, shown by a salesperson on
+a call, not an artifact this pipeline produces.
 
 ## Getting started
 
@@ -140,8 +112,8 @@ configured and approved for use.
 
 ### Storage
 
-`STORAGE_DRIVER=local` (default) writes captured screenshots/HTML and
-generated previews to `./storage` on disk, served back to the dashboard via
+`STORAGE_DRIVER=local` (default) writes captured website screenshots/HTML to
+`./storage` on disk, served back to the dashboard via
 `src/app/storage-files/[...path]/route.ts`. Switch to `STORAGE_DRIVER=s3` and
 implement `S3StorageDriver` in `src/lib/capture/storage.ts` for a real
 deployment — the interface is already in place so no caller needs to change.
